@@ -52,13 +52,6 @@ jobs:
         cd $GITHUB_WORKSPACE/kernel_workspace
         git clone ${{ env.KERNEL_SOURCE }} -b ${{ env.KERNEL_SOURCE_BRANCH }} android-kernel --depth=1
 
-    - name: Kernel patch
-      run: |
-        cd $GITHUB_WORKSPACE/kernel_workspace
-        wget https://raw.githubusercontent.com/Shas45558/KernelSU_Action_mt6768/refs/heads/a13r_oc_lancelot/KernelSU.patch
-        git apply $GITHUB_WORKSPACE/kernel_workspace/KernelSU.patch
-        
-
     - name: Download source boot image
       if: env.MAKE_BOOT_IMAGE == 'true'
       run: |
@@ -71,23 +64,6 @@ jobs:
             echo "Source boot image is empty"
         fi
   
-    - name: Setup KernelSU
-      if: env.USE_KERNELSU == 'true'
-      run: |
-        cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
-        curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -
-        if [ ${{ env.USE_KPROBES }} = true ]; then
-            echo "CONFIG_MODULES=y" >> arch/${{ env.TARGET_ARCH }}/configs/${{ env.KERNEL_DEFCONFIG }}
-            echo "CONFIG_OVERLAY_FS=y" >> arch/${{ env.TARGET_ARCH }}/configs/${{ env.KERNEL_DEFCONFIG }}
-        fi
-        if [ ${{ env.DISABLE-LTO }} = true ]; then
-            sed -i 's/CONFIG_LTO=y/CONFIG_LTO=n/' arch/${{ env.TARGET_ARCH }}/configs/${{ env.KERNEL_DEFCONFIG }}
-            sed -i 's/CONFIG_LTO_CLANG=y/CONFIG_LTO_CLANG=n/' arch/${{ env.TARGET_ARCH }}/configs/${{ env.KERNEL_DEFCONFIG }}
-            sed -i 's/CONFIG_THINLTO=y/CONFIG_THINLTO=n/' arch/${{ env.TARGET_ARCH }}/configs/${{ env.KERNEL_DEFCONFIG }}
-            echo "CONFIG_LTO_NONE=y" >> arch/${{ env.TARGET_ARCH }}/configs/${{ env.KERNEL_DEFCONFIG }}
-        fi
-        echo "UPLOADNAME=-KernelSU" >> $GITHUB_ENV
-
     - name: Generate kernel configuration
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
