@@ -114,7 +114,8 @@ jobs:
             echo "CONFIG_OVERLAY_FS_INDEX=y" >> arch/arm64/configs/${DEVICE}_defconfig
         fi
         sed -i 's/CONFIG_LOCALVERSION_AUTO=y/CONFIG_LOCALVERSION_AUTO=n/g' arch/arm64/configs/${DEVICE}_defconfig
-        sed -i 's/CONFIG_LOCALVERSION=\"-perf\"/CONFIG_LOCALVERSION=\"-NyariKernel\"/g' arch/arm64/configs/${DEVICE}_defconfig
+        sed -i -r '/CONFIG_LOCALVERSION=.*/d' arch/arm64/configs/${DEVICE}_defconfig
+        echo "CONFIG_LOCALVERSION=\"-NyariKernel\"" >> arch/arm64/configs/${DEVICE}_defconfig
         export PATH=$GITHUB_WORKSPACE/clang/bin:$PATH
         export ARCH=arm64
         export SUBARCH=arm64
