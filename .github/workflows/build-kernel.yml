@@ -67,6 +67,7 @@ jobs:
         cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
         curl -LSs "$KERNELSU_SETUP_SOURCE" | bash -s ${{ env.KERNELSU_TAG }}
         KSU_VERSION="_$(cd $(echo "$KERNELSU_SETUP_SOURCE" | cut -d/ -f5) || cd KernelSU && expr $(git rev-list --count HEAD) + 10200)"
+        echo "UPLOADNAME=-$(echo "$KERNELSU_SETUP_SOURCE" | cut -d/ -f5)$KSU_VERSION" >> $GITHUB_ENV
 
     - name: Generate kernel configuration
       run: |
@@ -112,6 +113,8 @@ jobs:
             echo "CONFIG_OVERLAY_FS_REDIRECT_DIR=y" >> arch/arm64/configs/${DEVICE}_defconfig
             echo "CONFIG_OVERLAY_FS_INDEX=y" >> arch/arm64/configs/${DEVICE}_defconfig
         fi
+        sed -i 's/CONFIG_LOCALVERSION_AUTO=y/CONFIG_LOCALVERSION_AUTO=n/g' arch/arm64/configs/${DEVICE}_defconfig
+        sed -i 's/CONFIG_LOCALVERSION=\"-perf\"/CONFIG_LOCALVERSION=\"-NyariKernel\"/g' arch/arm64/configs/${DEVICE}_defconfig
         export PATH=$GITHUB_WORKSPACE/clang/bin:$PATH
         export ARCH=arm64
         export SUBARCH=arm64
@@ -145,7 +148,7 @@ jobs:
     - name: Make Anykernel3
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace
-        git clone https://github.com/Jbub5/AnyKernel3
+        git clone https://github.com/7jari/AnyKernel3
         if [ ${{ env.CHECK_FILE_IS_OK }} = true ]; then
             cp android-kernel/out/arch/arm64/boot/${{ env.KERNEL_FILE }} AnyKernel3/
         fi
@@ -175,7 +178,7 @@ jobs:
       if: env.CHECK_FILE_IS_OK == 'true'
       uses: actions/upload-artifact@v4
       with:
-        name: AnyKernel3${{ env.UPLOADNAME }}-${{ env.DEVICE }}-${{ env.BUILD_TIME }}
+        name: NyariKernel${{ env.UPLOADNAME }}-${{ env.DEVICE }}-${{ env.BUILD_TIME }}
         path: kernel_workspace/AnyKernel3/*
 
     - name: Upload boot image
