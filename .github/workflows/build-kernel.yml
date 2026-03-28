@@ -20,11 +20,7 @@ jobs:
     - uses: actions/checkout@v6
     - name: Setup Configuration
       run: |
-        echo "KERNEL_FILE=$(cat config.env | grep "KERNEL_FILE" | head -n 1 | cut -d "=" -f 2)" >> $GITHUB_ENV
-        echo "ADD_APATCH_SUPPORT=$(cat config.env | grep "ADD_APATCH_SUPPORT" | head -n 1 | cut -d "=" -f 2)" >> $GITHUB_ENV
-        echo "OLD_ANDROID_SUPPORT=$(cat config.env | grep "OLD_ANDROID_SUPPORT" | head -n 1 | cut -d "=" -f 2)" >> $GITHUB_ENV
-        echo "MAKE_BOOT_IMAGE=$(cat config.env | grep "MAKE_BOOT_IMAGE" | head -n 1 | cut -d "=" -f 2)" >> $GITHUB_ENV
-        echo "SOURCE_BOOT_IMAGE=$(cat config.env | grep "SOURCE_BOOT_IMAGE" | head -n 1 | cut -d "=" -f 2)" >> $GITHUB_ENV
+        grep -v -E "^#|^\n" config.env | sed 's/ #.*//; s/#.*//' >> $GITHUB_ENV
 
     - name: Setup build kernel environment
       run: |
@@ -64,7 +60,14 @@ jobs:
         else
             echo "Source boot image is empty"
         fi
-  
+
+    - name: Setup KernelSU
+      if: env.ENABLE_KERNELSU == 'true'
+      run: |
+        cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
+        curl -LSs "$KERNELSU_SETUP_SOURCE" | bash -s ${{ env.KERNELSU_TAG }}
+        KSU_VERSION="_$(cd $(echo "$KERNELSU_SETUP_SOURCE" | cut -d/ -f5) || cd KernelSU && expr $(git rev-list --count HEAD) + 10200)"
+
     - name: Generate kernel configuration
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
@@ -86,6 +89,28 @@ jobs:
                 sed -i 's/# CONFIG_KALLSYMS_BASE_RELATIVE is not set/CONFIG_KALLSYMS_BASE_RELATIVE=y/g' arch/arm64/configs/${DEVICE}_defconfig
                 sed -i 's/CONFIG_KALLSYMS_BASE_RELATIVE=n/CONFIG_KALLSYMS_BASE_RELATIVE=y/g' arch/arm64/configs/${DEVICE}_defconfig
                 echo "CONFIG_KALLSYMS_BASE_RELATIVE=y" >> arch/arm64/configs/${DEVICE}_defconfig
+        fi
+        if [ ${{ env.ENABLE_KERNELSU }} = true ]; then
+            if [ ${{ env.KSU_HOOKS_PATCH }} = true ]; then
+                git apply $GITHUB_WORKSPACE/KernelSU.patch
+                if grep -q "CONFIG_KSU" arch/${{ env.KERNEL_ARCH }}/configs/${DEVICE}_defconfig; then
+                    sed -i 's/# CONFIG_KSU is not set/CONFIG_KSU=y/g' arch/${{ env.KERNEL_ARCH }}/configs/${DEVICE}_defconfig
+                    sed -i 's/CONFIG_KSU=n/CONFIG_KSU=y/g' arch/${{ env.KERNEL_ARCH }}/configs/${DEVICE}_defconfig
+                else
+                    echo "CONFIG_KSU=y" >> arch/${{ env.KERNEL_ARCH }}/configs/${DEVICE}_defconfig
+                fi
+            fi
+            if [ ${{ env.ADD_KPROBES_CONFIG }} = true -a ${{ env.KSU_HOOKS_PATCH }} != true ]; then
+                echo "CONFIG_MODULES=y" >> arch/${{ env.KERNEL_ARCH }}/configs/${DEVICE}_defconfig
+                echo "CONFIG_KPROBES=y" >> arch/${{ env.KERNEL_ARCH }}/configs/${DEVICE}_defconfig
+                echo "CONFIG_HAVE_KPROBES=y" >> arch/${{ env.KERNEL_ARCH }}/configs/${DEVICE}_defconfig
+                echo "CONFIG_KPROBE_EVENTS=y" >> arch/${{ env.KERNEL_ARCH }}/configs/${DEVICE}_defconfig
+            fi
+        fi
+        if [ ${{ env.ADD_OVERLAYFS_CONFIG }} = true ]; then
+            echo "CONFIG_OVERLAY_FS=y" >> arch/${{ env.KERNEL_ARCH }}/configs/${DEVICE}_defconfig
+            echo "CONFIG_OVERLAY_FS_REDIRECT_DIR=y" >> arch/${{ env.KERNEL_ARCH }}/configs/${DEVICE}_defconfig
+            echo "CONFIG_OVERLAY_FS_INDEX=y" >> arch/${{ env.KERNEL_ARCH }}/configs/${DEVICE}_defconfig
         fi
         export PATH=$GITHUB_WORKSPACE/clang/bin:$PATH
         export ARCH=arm64
