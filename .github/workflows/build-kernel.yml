@@ -93,14 +93,18 @@ jobs:
         fi
         if [ ${{ env.ENABLE_KERNELSU }} = true ]; then
             if [ ${{ env.KSU_HOOKS_PATCH }} = true ]; then
-                git apply $GITHUB_WORKSPACE/KernelSU.patch
                 if grep -q "CONFIG_KSU" arch/arm64/configs/${DEVICE}_defconfig; then
                     sed -i 's/# CONFIG_KSU is not set/CONFIG_KSU=y/g' arch/arm64/configs/${DEVICE}_defconfig
                     sed -i 's/CONFIG_KSU=n/CONFIG_KSU=y/g' arch/arm64/configs/${DEVICE}_defconfig
                 else
                     echo "CONFIG_KSU=y" >> arch/arm64/configs/${DEVICE}_defconfig
                 fi
-                echo "CONFIG_KSU_MANUAL_HOOK=y" >> arch/arm64/configs/${DEVICE}_defconfig
+                if [ ${{ env.KERNELSU_IS_V3 }} = true ]; then
+                    git apply $GITHUB_WORKSPACE/patches/ksu-v3.patch
+                    echo "CONFIG_KSU_MANUAL_HOOK=y" >> arch/arm64/configs/${DEVICE}_defconfig
+                else
+                    git apply $GITHUB_WORKSPACE/patches/ksu-v1.patch
+                fi
             fi
             if [ ${{ env.ADD_KPROBES_CONFIG }} = true -a ${{ env.KSU_HOOKS_PATCH }} != true ]; then
                 echo "CONFIG_MODULES=y" >> arch/arm64/configs/${DEVICE}_defconfig
@@ -108,7 +112,7 @@ jobs:
                 echo "CONFIG_HAVE_KPROBES=y" >> arch/arm64/configs/${DEVICE}_defconfig
                 echo "CONFIG_KPROBE_EVENTS=y" >> arch/arm64/configs/${DEVICE}_defconfig
             fi
-            if [ ${{ env.ENABLE_KERNELSU_INTEGRATED_SUSFS }} = true ]; then
+            if [ ${{ env.ENABLE_KERNELSU_V3_SUSFS }} = true ]; then
                 echo "CONFIG_KSU_SUSFS=y" >> arch/arm64/configs/${DEVICE}_defconfig
                 echo "CONFIG_KSU_SUSFS_SUS_PATH=y" >> arch/arm64/configs/${DEVICE}_defconfig
                 echo "CONFIG_KSU_SUSFS_SUS_MOUNT=y" >> arch/arm64/configs/${DEVICE}_defconfig
