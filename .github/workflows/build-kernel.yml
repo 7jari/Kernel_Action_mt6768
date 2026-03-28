@@ -112,7 +112,7 @@ jobs:
                 echo "CONFIG_HAVE_KPROBES=y" >> arch/arm64/configs/${DEVICE}_defconfig
                 echo "CONFIG_KPROBE_EVENTS=y" >> arch/arm64/configs/${DEVICE}_defconfig
             fi
-            if [ ${{ env.ENABLE_KERNELSU_V3_SUSFS }} = true ]; then
+            if [ ${{ env.KERNELSU_IS_V3 }} = true -a ${{ env.ENABLE_KERNELSU_V3_SUSFS }} = true ]; then
                 echo "CONFIG_KSU_SUSFS=y" >> arch/arm64/configs/${DEVICE}_defconfig
                 echo "CONFIG_KSU_SUSFS_SUS_PATH=y" >> arch/arm64/configs/${DEVICE}_defconfig
                 echo "CONFIG_KSU_SUSFS_SUS_MOUNT=y" >> arch/arm64/configs/${DEVICE}_defconfig
