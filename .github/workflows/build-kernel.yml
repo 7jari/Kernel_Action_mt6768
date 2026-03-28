@@ -21,8 +21,8 @@ jobs:
     - name: Setup Configuration
       run: |
         echo "KERNEL_FILE=$(cat config.env | grep "KERNEL_FILE" | head -n 1 | cut -d "=" -f 2)" >> $GITHUB_ENV
-        echo "ADD_APATCH_SUPPORT=$(cat config.env | grep "CLANG_VERSION" | head -n 1 | cut -d "=" -f 2)" >> $GITHUB_ENV
-        echo "OLD_ANDROID_SUPPORT=$(cat config.env | grep "CLANG_VERSION" | head -n 1 | cut -d "=" -f 2)" >> $GITHUB_ENV
+        echo "ADD_APATCH_SUPPORT=$(cat config.env | grep "ADD_APATCH_SUPPORT" | head -n 1 | cut -d "=" -f 2)" >> $GITHUB_ENV
+        echo "OLD_ANDROID_SUPPORT=$(cat config.env | grep "OLD_ANDROID_SUPPORT" | head -n 1 | cut -d "=" -f 2)" >> $GITHUB_ENV
         echo "MAKE_BOOT_IMAGE=$(cat config.env | grep "MAKE_BOOT_IMAGE" | head -n 1 | cut -d "=" -f 2)" >> $GITHUB_ENV
         echo "SOURCE_BOOT_IMAGE=$(cat config.env | grep "SOURCE_BOOT_IMAGE" | head -n 1 | cut -d "=" -f 2)" >> $GITHUB_ENV
 
