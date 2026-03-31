@@ -15,7 +15,7 @@ jobs:
   build:
     name: Build Kernel by ${{ github.actor }}
     runs-on: ubuntu-22.04
-    
+
     steps:
     - uses: actions/checkout@v6
     - name: Setup Configuration
@@ -55,7 +55,7 @@ jobs:
         cd $GITHUB_WORKSPACE/kernel_workspace
         wget -O boot-source.img ${{ env.SOURCE_BOOT_IMAGE }}
         if [ -f boot-source.img ]; then
-            echo "FORMAT_MKBOOTING=$(echo `tools/unpack_bootimg.py --boot_img=boot-source.img --format mkbootimg`)" >> $GITHUB_ENV
+            echo "FORMAT_MKBOOTIMG=$(echo `tools/unpack_bootimg.py --boot_img=boot-source.img --format mkbootimg`)" >> $GITHUB_ENV
             echo "HAVE_SOURCE_BOOT_IMAGE=true" >> $GITHUB_ENV
         else
             echo "Source boot image is empty"
@@ -128,8 +128,7 @@ jobs:
         export KBUILD_BUILD_HOST=GitHub-Action
         export KBUILD_BUILD_USER=$(echo ${{ github.actor }} | tr A-Z a-z)
         if [ ${{ env.ADD_DROIDSPACES_SUPPORT }} = true ]; then
-            git apply $GITHUB_WORKSPACE/patches/01-droidspaces.patch
-            git apply $GITHUB_WORKSPACE/patches/02-droidspaces.patch
+            git apply $GITHUB_WORKSPACE/patches/droidspaces.patch
             cp $GITHUB_WORKSPACE/droidspaces.config arch/arm64/configs/droidspaces.config
             make -j$(nproc --all) O=out ARCH=arm64 CC=clang ${DEVICE}_defconfig droidspaces.config
         else
@@ -173,13 +172,13 @@ jobs:
         cd $GITHUB_WORKSPACE/kernel_workspace
         tools/unpack_bootimg.py --boot_img boot-source.img
         cp android-kernel/out/arch/arm64/boot/${{ env.KERNEL_FILE }} out/kernel
-        tools/mkbootimg.py ${{ env.FORMAT_MKBOOTING }} -o boot.img
+        tools/mkbootimg.py ${{ env.FORMAT_MKBOOTIMG }} -o boot.img
         if [ -f boot.img ]; then
             echo "MAKE_BOOT_IMAGE_IS_OK=true" >> $GITHUB_ENV
         else
             echo "Boot image is empty"
         fi
-    
+
     - name: Upload ${{ env.KERNEL_FILE }}
       if: env.CHECK_FILE_IS_OK == 'true'
       uses: actions/upload-artifact@v6
