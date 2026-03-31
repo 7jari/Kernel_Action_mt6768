@@ -127,7 +127,7 @@ jobs:
         export KBUILD_COMPILER_STRING="$(clang --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')"
         export KBUILD_BUILD_HOST=GitHub-Action
         export KBUILD_BUILD_USER=$(echo ${{ github.actor }} | tr A-Z a-z)
-        if [ ${{ env.ADD_DROIDSPACES_SUPPORT }} = true ]; then
+        if [ ${{ env.ADD_DROIDSPACES_SUPPORT }} = true -a ${{ env.OLD_ANDROID_SUPPORT }} != true ]; then
             git apply $GITHUB_WORKSPACE/patches/droidspaces.patch
             cp $GITHUB_WORKSPACE/droidspaces.config arch/arm64/configs/droidspaces.config
             make -j$(nproc --all) O=out ARCH=arm64 CC=clang ${DEVICE}_defconfig droidspaces.config
