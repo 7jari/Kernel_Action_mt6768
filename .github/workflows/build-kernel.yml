@@ -121,6 +121,16 @@ jobs:
         sed -i 's/CONFIG_LOCALVERSION_AUTO=y/CONFIG_LOCALVERSION_AUTO=n/g' arch/arm64/configs/${DEVICE}_defconfig
         sed -i -r '/CONFIG_LOCALVERSION=.*/d' arch/arm64/configs/${DEVICE}_defconfig
         echo "CONFIG_LOCALVERSION=\"-NyariKernel\"" >> arch/arm64/configs/${DEVICE}_defconfig
+        if [ ${{ env.DISABLE_LTO }} = true ]; then
+            echo "CONFIG_LTO=n" >> arch/arm64/configs/${DEVICE}_defconfig
+            echo "CONFIG_LTO_CLANG=n" >> arch/arm64/configs/${DEVICE}_defconfig
+            echo "CONFIG_THINLTO=n" >> arch/arm64/configs/${DEVICE}_defconfig
+            echo "CONFIG_LTO_NONE=y" >> arch/arm64/configs/${DEVICE}_defconfig
+        fi
+
+    - name: Build kernel
+      run: |
+        cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
         export PATH=$GITHUB_WORKSPACE/clang/bin:$PATH
         export ARCH=arm64
         export SUBARCH=arm64
@@ -134,24 +144,12 @@ jobs:
         else
             make -j$(nproc --all) O=out ARCH=arm64 CC=clang ${DEVICE}_defconfig
         fi
-
-    - name: Build kernel
-      run: |
-        cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
-        export PATH=$GITHUB_WORKSPACE/clang/bin:$PATH
-        export ARCH=arm64
-        export SUBARCH=arm64
-        export KBUILD_COMPILER_STRING="$(clang --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')"
-        export KBUILD_BUILD_HOST=GitHub-Action
-        export KBUILD_BUILD_USER=$(echo ${{ github.actor }} | tr A-Z a-z)
-        make -j$(nproc --all) O=out ARCH=arm64 savedefconfig
-        cp -f out/defconfig arch/arm64/configs/${DEVICE}_defconfig
         make -j$(nproc --all) O=out ARCH=arm64 CC=clang CROSS_COMPILE=aarch64-linux-gnu-
 
     - name: Check kernel output files
       run: |
        cd $GITHUB_WORKSPACE/kernel_workspace
-       if [ -f android-kernel/out/arch/arm64/boot/${{ env.KERNEL_FILE }} ]; then
+       if [ -f android-kernel/out/arch/arm64/boot/Image.gz-dtb ]; then
            echo "CHECK_FILE_IS_OK=true" >> $GITHUB_ENV
        else
            echo "Kernel output file is empty"
@@ -162,7 +160,7 @@ jobs:
         cd $GITHUB_WORKSPACE/kernel_workspace
         git clone https://github.com/7jari/AnyKernel3
         if [ ${{ env.CHECK_FILE_IS_OK }} = true ]; then
-            cp android-kernel/out/arch/arm64/boot/${{ env.KERNEL_FILE }} AnyKernel3/
+            cp android-kernel/out/arch/arm64/boot/Image.gz-dtb AnyKernel3/
         fi
         rm -rf AnyKernel3/.git* AnyKernel3/README.md
 
@@ -171,7 +169,7 @@ jobs:
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace
         tools/unpack_bootimg.py --boot_img boot-source.img
-        cp android-kernel/out/arch/arm64/boot/${{ env.KERNEL_FILE }} out/kernel
+        cp android-kernel/out/arch/arm64/boot/Image.gz-dtb out/kernel
         tools/mkbootimg.py ${{ env.FORMAT_MKBOOTIMG }} -o boot.img
         if [ -f boot.img ]; then
             echo "MAKE_BOOT_IMAGE_IS_OK=true" >> $GITHUB_ENV
@@ -179,12 +177,12 @@ jobs:
             echo "Boot image is empty"
         fi
 
-    - name: Upload ${{ env.KERNEL_FILE }}
+    - name: Upload kernel file
       if: env.CHECK_FILE_IS_OK == 'true'
       uses: actions/upload-artifact@v6
       with:
-        name: ${{ env.KERNEL_FILE }}${{ env.UPLOADNAME }}-${{ env.DEVICE }}-${{ env.BUILD_TIME }}
-        path: kernel_workspace/android-kernel/out/arch/arm64/boot/${{ env.KERNEL_FILE }}
+        name: Image.gz-dtb${{ env.UPLOADNAME }}-${{ env.DEVICE }}-${{ env.BUILD_TIME }}
+        path: kernel_workspace/android-kernel/out/arch/arm64/boot/Image.gz-dtb
 
     - name: Upload AnyKernel3
       if: env.CHECK_FILE_IS_OK == 'true'
