@@ -147,6 +147,8 @@ jobs:
         export KBUILD_BUILD_USER=$(echo ${{ github.actor }} | tr A-Z a-z)
         make -j$(nproc --all) O=out ARCH=arm64 savedefconfig
         cp -f out/defconfig arch/arm64/configs/${DEVICE}_defconfig
+        git add arch/arm64/configs/droidspaces.config || true
+        git commit -a -m "NyariKernel"
         make -j$(nproc --all) O=out ARCH=arm64 CC=clang CROSS_COMPILE=aarch64-linux-gnu-
 
     - name: Check kernel output files
