@@ -130,6 +130,8 @@ jobs:
         export KBUILD_BUILD_USER=$(echo ${{ github.actor }} | tr A-Z a-z)
         if [ ${{ env.ADD_DROIDSPACES_SUPPORT }} = true ]; then
             git apply $GITHUB_WORKSPACE/patches/droidspaces.patch
+            git apply $GITHUB_WORKSPACE/patches/stock_defconfig.patch
+            cp $GITHUB_WORKSPACE/${DEVICE}_defconfig arch/arm64/configs/stock_defconfig
             cp $GITHUB_WORKSPACE/droidspaces.config arch/arm64/configs/droidspaces.config
             make -j$(nproc --all) O=out ARCH=arm64 CC=clang ${DEVICE}_defconfig droidspaces.config
         else
@@ -147,8 +149,6 @@ jobs:
         export KBUILD_BUILD_USER=$(echo ${{ github.actor }} | tr A-Z a-z)
         make -j$(nproc --all) O=out ARCH=arm64 savedefconfig
         cp -f out/defconfig arch/arm64/configs/${DEVICE}_defconfig
-        git add arch/arm64/configs/droidspaces.config || true
-        git commit -a -m "NyariKernel"
         make -j$(nproc --all) O=out ARCH=arm64 CC=clang CROSS_COMPILE=aarch64-linux-gnu-
 
     - name: Check kernel output files
