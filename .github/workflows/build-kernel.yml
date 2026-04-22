@@ -47,7 +47,7 @@ jobs:
     - name: Download kernel source
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace
-        git clone https://github.com/EmreDemirn-Repos/android_kernel_xiaomi_mt6768-s.git -b lineage-20-upstream android-kernel --single-branch
+        git clone https://github.com/Jbub5/android_kernel_xiaomi_mt6768-s.git -b hello-moto+conn+++ android-kernel --single-branch
 
     - name: Download source boot image
       if: env.MAKE_BOOT_IMAGE == 'true'
@@ -72,10 +72,11 @@ jobs:
     - name: Generate kernel configuration
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
-        if [ ${{ env.OLD_ANDROID_SUPPORT }} = true ]; then
-                git config --global user.name "github-actions[bot]"
-                git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-                git revert 047400d0e314b8382c72280fa759d8b84c3996cd
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git revert 6b10a2c04a1210e88bfebad3e455f43bf324a607
+        if [ ${{ env.OLD_ANDROID_SUPPORT }} = false ]; then
+                git revert 9909dbf504ad6c3dc49d5a628f107433938e6823
         fi
         if [ ${{ env.ADD_APATCH_SUPPORT }} = true ]; then
                 sed -i 's/# CONFIG_DEBUG_KERNEL is not set/CONFIG_DEBUG_KERNEL=y/g' arch/arm64/configs/${DEVICE}_defconfig
