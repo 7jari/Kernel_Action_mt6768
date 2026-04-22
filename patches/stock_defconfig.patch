@@ -1,22 +1,24 @@
-commit e788cf7380fb3ff18fed99ca2e3fa968d0334d84
-Author: Ravindu Deshan <droidcasts@protonmail.com>
-Date:   Thu Mar 27 00:35:02 2025 +0530
+From 309b0ac4ccb19cd1dbf1de8bee7d0625e20afcf0 Mon Sep 17 00:00:00 2001
+From: Ravindu Deshan <Droidcasts@protonmail.com>
+Date: Thu, 23 Apr 2026 06:33:18 +0700
+Subject: [PATCH] kernel: Use the stock config for /proc/config.gz
 
-    kernel: Use the stock config for /proc/config.gz
-    
-    Userspace reads /proc/config.gz and spits out an error message after boot
-    finishes when it doesn't like the kernel's configuration. In order to
-    preserve our freedom to customize the kernel however we'd like, show
-    userspace the stock defconfig so that it never complains about our
-    kernel configuration.
-    
-    Signed-off-by: Ravindu Deshan <droidcasts@protonmail.com>
+Userspace reads /proc/config.gz and spits out an error message after boot
+finishes when it doesn't like the kernel's configuration. In order to
+preserve our freedom to customize the kernel however we'd like, show
+userspace the stock defconfig so that it never complains about our
+kernel configuration.
+
+Signed-off-by: Ravindu Deshan <Droidcasts@protonmail.com>
+---
+ kernel/Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/kernel/Makefile b/kernel/Makefile
-index 3d6ca8e9d..3fc4dc811 100644
+index f49af3b..049d5a4 100644
 --- a/kernel/Makefile
 +++ b/kernel/Makefile
-@@ -120,7 +120,7 @@ obj-$(CONFIG_HAS_IOMEM) += memremap.o
+@@ -126,7 +126,7 @@ obj-$(CONFIG_HAS_IOMEM) += memremap.o
  $(obj)/configs.o: $(obj)/config_data.h
  
  targets += config_data.gz
@@ -25,3 +27,6 @@ index 3d6ca8e9d..3fc4dc811 100644
  	$(call if_changed,gzip)
  
        filechk_ikconfiggz = (echo "static const char kernel_config_data[] __used = MAGIC_START"; cat $< | scripts/basic/bin2c; echo "MAGIC_END;")
+-- 
+2.53.0
+
