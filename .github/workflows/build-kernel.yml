@@ -27,7 +27,7 @@ jobs:
         echo "BUILD_TIME=$(TZ=Asia/Jakarta date "+%Y%m%d%H%M")" >> $GITHUB_ENV
         echo "DEVICE=${{ github.event.inputs.select_device }}" >> $GITHUB_ENV
         sudo apt-get update
-        sudo apt-get install git ccache automake flex lzop bison gperf build-essential zip curl zlib1g-dev g++-multilib libxml2-utils bzip2 libbz2-dev libbz2-1.0 libghc-bzlib-dev squashfs-tools pngcrush schedtool dpkg-dev liblz4-tool make optipng maven libssl-dev pwgen libswitch-perl policycoreutils minicom libxml-sax-base-perl libxml-simple-perl bc libc6-dev-i386 lib32ncurses5-dev libx11-dev lib32z-dev libgl1-mesa-dev xsltproc unzip device-tree-compiler python2 python3
+        sudo apt-get install git automake flex lzop bison gperf build-essential zip curl zlib1g-dev g++-multilib libxml2-utils bzip2 libbz2-dev libbz2-1.0 libghc-bzlib-dev squashfs-tools pngcrush schedtool dpkg-dev liblz4-tool make optipng maven libssl-dev pwgen libswitch-perl policycoreutils minicom libxml-sax-base-perl libxml-simple-perl bc libc6-dev-i386 lib32ncurses5-dev libx11-dev lib32z-dev libgl1-mesa-dev xsltproc unzip device-tree-compiler python2 python3
         mkdir -p $GITHUB_WORKSPACE/kernel_workspace
 
     - name: Download Clang Toolchain
@@ -112,15 +112,15 @@ jobs:
                 echo "CONFIG_HAVE_KPROBES=y" >> arch/arm64/configs/${DEVICE}_defconfig
                 echo "CONFIG_KPROBE_EVENTS=y" >> arch/arm64/configs/${DEVICE}_defconfig
             fi
-            if [ ${{ env.ADD_OVERLAYFS_CONFIG }} = true ]; then
-                echo "CONFIG_OVERLAY_FS=y" >> arch/arm64/configs/${DEVICE}_defconfig
-                echo "CONFIG_OVERLAY_FS_REDIRECT_DIR=y" >> arch/arm64/configs/${DEVICE}_defconfig
-                echo "CONFIG_OVERLAY_FS_INDEX=y" >> arch/arm64/configs/${DEVICE}_defconfig
-            fi
+        fi
+        if [ ${{ env.ADD_OVERLAYFS_CONFIG }} = true ]; then
+            echo "CONFIG_OVERLAY_FS=y" >> arch/arm64/configs/${DEVICE}_defconfig
+            echo "CONFIG_OVERLAY_FS_REDIRECT_DIR=y" >> arch/arm64/configs/${DEVICE}_defconfig
+            echo "CONFIG_OVERLAY_FS_INDEX=y" >> arch/arm64/configs/${DEVICE}_defconfig
         fi
         sed -i 's/CONFIG_LOCALVERSION_AUTO=y/CONFIG_LOCALVERSION_AUTO=n/g' arch/arm64/configs/${DEVICE}_defconfig
         sed -i -r '/CONFIG_LOCALVERSION=.*/d' arch/arm64/configs/${DEVICE}_defconfig
-        echo "CONFIG_LOCALVERSION=\"-NyariKernel\"" >> arch/arm64/configs/${DEVICE}_defconfig
+        echo "CONFIG_LOCALVERSION=\"-Nyari-Gayming-Babaji-6768fps-Svendor\"" >> arch/arm64/configs/${DEVICE}_defconfig
         export PATH=$GITHUB_WORKSPACE/clang/bin:$PATH
         export ARCH=arm64
         export SUBARCH=arm64
