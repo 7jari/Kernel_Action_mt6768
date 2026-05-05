@@ -47,7 +47,7 @@ jobs:
     - name: Download kernel source
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace
-        git clone https://github.com/Jbub5/android_kernel_xiaomi_mt6768-s.git -b hello-moto+conn+++ android-kernel --single-branch
+        git clone https://github.com/Jbub5/android_kernel_xiaomi_mt6768-s.git -b hello-moto+merlin android-kernel --single-branch
 
     - name: Download source boot image
       if: env.MAKE_BOOT_IMAGE == 'true'
