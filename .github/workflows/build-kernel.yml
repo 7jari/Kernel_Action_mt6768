@@ -47,7 +47,7 @@ jobs:
     - name: Download kernel source
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace
-        git clone https://github.com/Jbub5/android_kernel_xiaomi_mt6768-s.git -b hello-moto+merlin android-kernel --single-branch
+        git clone https://github.com/Redmi-MT6768-Nyari/linux-android-xiaomi-merlin -b halium-12 android-kernel --single-branch
 
     - name: Download source boot image
       if: env.MAKE_BOOT_IMAGE == 'true'
@@ -61,81 +61,21 @@ jobs:
             echo "Source boot image is empty"
         fi
 
-    - name: Setup KernelSU
-      if: env.ENABLE_KERNELSU == 'true'
-      run: |
-        cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
-        curl -LSs "$KERNELSU_SETUP_SOURCE" | bash -s ${{ env.KERNELSU_TAG }}
-        KSU_VERSION="_$(cd $(echo "$KERNELSU_SETUP_SOURCE" | cut -d/ -f5) || cd KernelSU && expr $(git rev-list --count HEAD) + 10200)"
-        echo "UPLOADNAME=-$(echo "$KERNELSU_SETUP_SOURCE" | cut -d/ -f5)$KSU_VERSION" >> $GITHUB_ENV
-
     - name: Generate kernel configuration
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
         git config --global user.name "github-actions[bot]"
         git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-        if [ ${{ env.OLD_ANDROID_SUPPORT }} = false ]; then
-                git revert 9909dbf504ad6c3dc49d5a628f107433938e6823
-        fi
-        if [ ${{ env.ADD_APATCH_SUPPORT }} = true ]; then
-                sed -i 's/# CONFIG_DEBUG_KERNEL is not set/CONFIG_DEBUG_KERNEL=y/g' arch/arm64/configs/${DEVICE}_defconfig
-                sed -i 's/CONFIG_DEBUG_KERNEL=n/CONFIG_DEBUG_KERNEL=y/g' arch/arm64/configs/${DEVICE}_defconfig
-                echo "CONFIG_DEBUG_KERNEL=y" >> arch/arm64/configs/${DEVICE}_defconfig
-                sed -i 's/# CONFIG_KALLSYMS is not set/CONFIG_KALLSYMS=y/g' arch/arm64/configs/${DEVICE}_defconfig
-                sed -i 's/CONFIG_KALLSYMS=n/CONFIG_KALLSYMS=y/g' arch/arm64/configs/${DEVICE}_defconfig
-                echo "CONFIG_KALLSYMS=y" >> arch/arm64/configs/${DEVICE}_defconfig
-                sed -i 's/# CONFIG_KALLSYMS_ALL is not set/CONFIG_KALLSYMS_ALL=y/g' arch/arm64/configs/${DEVICE}_defconfig
-                sed -i 's/CONFIG_KALLSYMS_ALL=n/CONFIG_KALLSYMS_ALL=y/g' arch/arm64/configs/${DEVICE}_defconfig
-                echo "CONFIG_KALLSYMS_ALL=y" >> arch/arm64/configs/${DEVICE}_defconfig
-                sed -i 's/# CONFIG_KALLSYMS_BASE_RELATIVE is not set/CONFIG_KALLSYMS_BASE_RELATIVE=y/g' arch/arm64/configs/${DEVICE}_defconfig
-                sed -i 's/CONFIG_KALLSYMS_BASE_RELATIVE=n/CONFIG_KALLSYMS_BASE_RELATIVE=y/g' arch/arm64/configs/${DEVICE}_defconfig
-                echo "CONFIG_KALLSYMS_BASE_RELATIVE=y" >> arch/arm64/configs/${DEVICE}_defconfig
-        fi
-        if [ ${{ env.ENABLE_KERNELSU }} = true ]; then
-            if [ ${{ env.KSU_HOOKS_PATCH }} = true ]; then
-                if grep -q "CONFIG_KSU" arch/arm64/configs/${DEVICE}_defconfig; then
-                    sed -i 's/# CONFIG_KSU is not set/CONFIG_KSU=y/g' arch/arm64/configs/${DEVICE}_defconfig
-                    sed -i 's/CONFIG_KSU=n/CONFIG_KSU=y/g' arch/arm64/configs/${DEVICE}_defconfig
-                else
-                    echo "CONFIG_KSU=y" >> arch/arm64/configs/${DEVICE}_defconfig
-                fi
-                if [ ${{ env.KERNELSU_IS_V3 }} = true ]; then
-                    git apply $GITHUB_WORKSPACE/patches/ksu-v3.patch
-                    echo "CONFIG_KSU_MANUAL_HOOK=y" >> arch/arm64/configs/${DEVICE}_defconfig
-                else
-                    git apply $GITHUB_WORKSPACE/patches/ksu-v1.patch
-                fi
-            fi
-            if [ ${{ env.ADD_KPROBES_CONFIG }} = true -a ${{ env.KSU_HOOKS_PATCH }} != true ]; then
-                echo "CONFIG_MODULES=y" >> arch/arm64/configs/${DEVICE}_defconfig
-                echo "CONFIG_KPROBES=y" >> arch/arm64/configs/${DEVICE}_defconfig
-                echo "CONFIG_HAVE_KPROBES=y" >> arch/arm64/configs/${DEVICE}_defconfig
-                echo "CONFIG_KPROBE_EVENTS=y" >> arch/arm64/configs/${DEVICE}_defconfig
-            fi
-        fi
-        if [ ${{ env.ADD_OVERLAYFS_CONFIG }} = true ]; then
-            echo "CONFIG_OVERLAY_FS=y" >> arch/arm64/configs/${DEVICE}_defconfig
-            echo "CONFIG_OVERLAY_FS_REDIRECT_DIR=y" >> arch/arm64/configs/${DEVICE}_defconfig
-            echo "CONFIG_OVERLAY_FS_INDEX=y" >> arch/arm64/configs/${DEVICE}_defconfig
-        fi
         sed -i 's/CONFIG_LOCALVERSION_AUTO=y/CONFIG_LOCALVERSION_AUTO=n/g' arch/arm64/configs/${DEVICE}_defconfig
         sed -i -r '/CONFIG_LOCALVERSION=.*/d' arch/arm64/configs/${DEVICE}_defconfig
-        echo "CONFIG_LOCALVERSION=\"-Nyari-Gayming-Babaji-6768fps-Svendor\"" >> arch/arm64/configs/${DEVICE}_defconfig
+        echo "CONFIG_LOCALVERSION=\"-Nyari-Halium-Svendor\"" >> arch/arm64/configs/${DEVICE}_defconfig
         export PATH=$GITHUB_WORKSPACE/clang/bin:$PATH
         export ARCH=arm64
         export SUBARCH=arm64
         export KBUILD_COMPILER_STRING="$(clang --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')"
         export KBUILD_BUILD_HOST=GitHub-Action
         export KBUILD_BUILD_USER=$(echo ${{ github.actor }} | tr A-Z a-z)
-        if [ ${{ env.ADD_DROIDSPACES_SUPPORT }} = true ]; then
-            git apply $GITHUB_WORKSPACE/patches/droidspaces.patch
-            git apply $GITHUB_WORKSPACE/patches/stock_defconfig.patch
-            cp $GITHUB_WORKSPACE/${DEVICE}_defconfig arch/arm64/configs/stock_defconfig
-            cp $GITHUB_WORKSPACE/droidspaces.config arch/arm64/configs/droidspaces.config
-            make -j$(nproc --all) O=out ARCH=arm64 CC=clang ${DEVICE}_defconfig droidspaces.config
-        else
-            make -j$(nproc --all) O=out ARCH=arm64 CC=clang ${DEVICE}_defconfig
-        fi
+        make -j$(nproc --all) O=out ARCH=arm64 CC=clang ${DEVICE}_defconfig
 
     - name: Build kernel
       run: |
@@ -153,7 +93,7 @@ jobs:
     - name: Check kernel output files
       run: |
        cd $GITHUB_WORKSPACE/kernel_workspace
-       if [ -f android-kernel/out/arch/arm64/boot/${{ env.KERNEL_FILE }} ]; then
+       if [ -f android-kernel/out/arch/arm64/boot/Image.gz ]; then
            echo "CHECK_FILE_IS_OK=true" >> $GITHUB_ENV
        else
            echo "Kernel output file is empty"
@@ -181,12 +121,12 @@ jobs:
             echo "Boot image is empty"
         fi
 
-    - name: Upload ${{ env.KERNEL_FILE }}
+    - name: Upload Image.gz
       if: env.CHECK_FILE_IS_OK == 'true'
       uses: actions/upload-artifact@v6
       with:
-        name: ${{ env.KERNEL_FILE }}${{ env.UPLOADNAME }}-${{ env.DEVICE }}-${{ env.BUILD_TIME }}
-        path: kernel_workspace/android-kernel/out/arch/arm64/boot/${{ env.KERNEL_FILE }}
+        name: Image.gz${{ env.UPLOADNAME }}-${{ env.DEVICE }}-${{ env.BUILD_TIME }}
+        path: kernel_workspace/android-kernel/out/arch/arm64/boot/Image.gz
 
     - name: Upload AnyKernel3
       if: env.CHECK_FILE_IS_OK == 'true'
