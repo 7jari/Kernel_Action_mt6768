@@ -32,7 +32,7 @@ jobs:
 
     - name: Download Clang Toolchain
       run: |
-        sudo apt install -y clang llvm lld
+        sudo apt install -y crossbuild-essential-arm64 clang llvm lld
 
     - name: Download mkbootimg tools
       if: env.MAKE_BOOT_IMAGE == 'true'
