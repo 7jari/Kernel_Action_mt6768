@@ -24,7 +24,7 @@ jobs:
 
     - name: Setup build kernel environment
       run: |
-        echo "BUILD_TIME=$(TZ=Asia/Jakarta date "+%Y%m%d%H%M")" >> $GITHUB_ENV
+        echo "BUILD_TIME=$(TZ=Asia/Jakarta date "+%Y%m%d-%H%M%S")" >> $GITHUB_ENV
         echo "DEVICE=${{ github.event.inputs.select_device }}" >> $GITHUB_ENV
         sudo apt-get update
         sudo apt-get install git automake flex lzop bison gperf build-essential zip curl zlib1g-dev g++-multilib libxml2-utils bzip2 libbz2-dev libbz2-1.0 libghc-bzlib-dev squashfs-tools pngcrush schedtool dpkg-dev liblz4-tool make optipng maven libssl-dev pwgen libswitch-perl policycoreutils minicom libxml-sax-base-perl libxml-simple-perl bc libc6-dev-i386 lib32ncurses5-dev libx11-dev lib32z-dev libgl1-mesa-dev xsltproc unzip device-tree-compiler python2 python3
@@ -32,8 +32,7 @@ jobs:
 
     - name: Download Clang Toolchain
       run: |
-        mkdir clang
-        git clone https://github.com/vijaymalav564/vortex-clang.git -b master --depth=1 clang
+        sudo apt install -y clang llvm lld
 
     - name: Download mkbootimg tools
       if: env.MAKE_BOOT_IMAGE == 'true'
@@ -47,7 +46,7 @@ jobs:
     - name: Download kernel source
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace
-        git clone https://github.com/Redmi-MT6768-Nyari/linux-android-xiaomi-merlin -b halium-12 android-kernel --single-branch
+        git clone https://github.com/Redmi-MT6768-Nyari/linux-android-xiaomi-merlin -b halium-13-droidian android-kernel --single-branch
 
     - name: Download source boot image
       if: env.MAKE_BOOT_IMAGE == 'true'
@@ -68,23 +67,21 @@ jobs:
         git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
         sed -i 's/CONFIG_LOCALVERSION_AUTO=y/CONFIG_LOCALVERSION_AUTO=n/g' arch/arm64/configs/${DEVICE}_defconfig
         sed -i -r '/CONFIG_LOCALVERSION=.*/d' arch/arm64/configs/${DEVICE}_defconfig
-        echo "CONFIG_LOCALVERSION=\"-Nyari-Halium-Svendor\"" >> arch/arm64/configs/${DEVICE}_defconfig
-        export PATH=$GITHUB_WORKSPACE/clang/bin:$PATH
+        echo "CONFIG_LOCALVERSION=\"-merlinx_halium\"" >> arch/arm64/configs/${DEVICE}_defconfig
         export ARCH=arm64
         export SUBARCH=arm64
         export KBUILD_COMPILER_STRING="$(clang --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')"
-        export KBUILD_BUILD_HOST=GitHub-Action
+        export KBUILD_BUILD_HOST=nyariland
         export KBUILD_BUILD_USER=$(echo ${{ github.actor }} | tr A-Z a-z)
         make -j$(nproc --all) O=out ARCH=arm64 CC=clang ${DEVICE}_defconfig
 
     - name: Build kernel
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
-        export PATH=$GITHUB_WORKSPACE/clang/bin:$PATH
         export ARCH=arm64
         export SUBARCH=arm64
         export KBUILD_COMPILER_STRING="$(clang --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')"
-        export KBUILD_BUILD_HOST=GitHub-Action
+        export KBUILD_BUILD_HOST=nyariland
         export KBUILD_BUILD_USER=$(echo ${{ github.actor }} | tr A-Z a-z)
         make -j$(nproc --all) O=out ARCH=arm64 savedefconfig
         cp -f out/defconfig arch/arm64/configs/${DEVICE}_defconfig
