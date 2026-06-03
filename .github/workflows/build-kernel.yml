@@ -47,7 +47,7 @@ jobs:
     - name: Download kernel source
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace
-        git clone https://github.com/Jbub5/android_kernel_xiaomi_mt6768-s.git -b hello-moto+merlin android-kernel --single-branch
+        git clone https://github.com/Redmi-MT6768-Nyari/android_kernel_xiaomi_mt6768-s-vr.git -b kt-moto-lancerlin android-kernel --single-branch
 
     - name: Download source boot image
       if: env.MAKE_BOOT_IMAGE == 'true'
@@ -75,7 +75,7 @@ jobs:
         git config --global user.name "github-actions[bot]"
         git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
         if [ ${{ env.OLD_ANDROID_SUPPORT }} = false ]; then
-                git revert 9909dbf504ad6c3dc49d5a628f107433938e6823
+                true
         fi
         if [ ${{ env.ADD_APATCH_SUPPORT }} = true ]; then
                 sed -i 's/# CONFIG_DEBUG_KERNEL is not set/CONFIG_DEBUG_KERNEL=y/g' arch/arm64/configs/${DEVICE}_defconfig
@@ -120,7 +120,7 @@ jobs:
         fi
         sed -i 's/CONFIG_LOCALVERSION_AUTO=y/CONFIG_LOCALVERSION_AUTO=n/g' arch/arm64/configs/${DEVICE}_defconfig
         sed -i -r '/CONFIG_LOCALVERSION=.*/d' arch/arm64/configs/${DEVICE}_defconfig
-        echo "CONFIG_LOCALVERSION=\"-Nyari-Gayming-Babaji-6768fps-Svendor\"" >> arch/arm64/configs/${DEVICE}_defconfig
+        echo "CONFIG_LOCALVERSION=\"-DoeniaMajaa\"" >> arch/arm64/configs/${DEVICE}_defconfig
         export PATH=$GITHUB_WORKSPACE/clang/bin:$PATH
         export ARCH=arm64
         export SUBARCH=arm64
